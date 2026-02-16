@@ -520,7 +520,7 @@ drive:
         failureThreshold: 3
         successThreshold: 1
         exec:
-          command: ["/bin/sh", "-c", "pgrep -f 'celery.*beat'"]
+          command: ["/bin/sh", "-c", "celery -A drive.celery_app inspect ping"]
       readiness:
         initialDelaySeconds: 30
         periodSeconds: 10
@@ -528,7 +528,7 @@ drive:
         failureThreshold: 3
         successThreshold: 1
         exec:
-          command: ["/bin/sh", "-c", "pgrep -f 'celery.*beat'"]
+          command: ["/bin/sh", "-c", "celery -A drive.celery_app inspect ping"]
   secretKey: ""
   languageCode: "en-us"
   CSRFTrustedOrigins: ""
