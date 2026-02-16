@@ -93,7 +93,7 @@ conversations:
     ## Specify a imagePullPolicy
     ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
     ##
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
     ## e.g:
@@ -798,7 +798,7 @@ job:
   args:
     - -c
     - |
-      while ! python manage.py check --database default > /dev/null 2>&1
+      while ! python -c "import psycopg; psycopg.connect(host='$DB_HOST', port='$DB_PORT', user='$DB_USER', password='$DB_PASSWORD', dbname='$DB_NAME', connect_timeout=5).close()" > /dev/null 2>&1
       do
         echo "Database not ready"
         sleep 2
