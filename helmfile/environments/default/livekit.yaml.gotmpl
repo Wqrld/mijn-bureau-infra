@@ -1,5 +1,4 @@
 livekit:
   meet:
-    apiKey: ~
-    apiSecret: ~
-    apiURL: ~
+    apiKey: "apikey"
+    apiSecret: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "livekit" "apikey" | sha1sum | quote }}

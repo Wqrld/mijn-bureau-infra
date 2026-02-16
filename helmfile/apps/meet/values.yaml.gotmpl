@@ -87,7 +87,7 @@ ingress:
 externalLivekit:
   apiKey: {{ .Values.livekit.meet.apiKey | quote }}
   apiSecret: {{ .Values.livekit.meet.apiSecret | quote }}
-  apiUrl: {{ .Values.livekit.meet.apiURL | quote }}
+  apiUrl: "wss://{{ .Values.global.hostname.livekit }}.{{ .Values.global.domain }}"
 
 externalRedis:
   host: {{ .Values.cache.meet.host | quote }}
