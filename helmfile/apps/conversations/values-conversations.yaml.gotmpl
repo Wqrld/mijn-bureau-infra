@@ -114,7 +114,14 @@ authentication:
     client_secret: {{ .Values.authentication.client.conversations.client_secret | quote }}
 
 
+{{- $aiModel := coalesce .Values.ai.llm.model (ternary .Values.application.ollama.model "" .Values.application.ollama.enabled) }}
+{{- $aiHost := coalesce .Values.ai.llm.endpoint.host (ternary "ollama" "" .Values.application.ollama.enabled) }}
+{{- $aiPort := default (ternary 11434 0 .Values.application.ollama.enabled) .Values.ai.llm.endpoint.port | int }}
+{{- $aiIsSsl := .Values.ai.llm.endpoint.isSsl | default false }}
+{{- $aiOpenApiVersion := coalesce .Values.ai.llm.endpoint.openApiVersion "v1" }}
+{{- $aiApiKey := .Values.ai.llm.apiKey | default "" }}
+
 ai:
-  model: {{ .Values.ai.llm.model | quote }}
-  endpoint: {{ printf "http%s://%s:%d/%s" (ternary "s" "" .Values.ai.llm.endpoint.isSsl) .Values.ai.llm.endpoint.host .Values.ai.llm.endpoint.port .Values.ai.llm.endpoint.openApiVersion | quote }}
-  apiKey: {{ .Values.ai.llm.apiKey | quote }}
+  model: {{ $aiModel | quote }}
+  endpoint: {{ printf "http%s://%s:%d/%s" (ternary "s" "" $aiIsSsl) $aiHost $aiPort $aiOpenApiVersion | quote }}
+  apiKey: {{ $aiApiKey | quote }}
