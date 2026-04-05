@@ -39,13 +39,13 @@ drive:
   superuserPassword: {{  .Values.secret.drive.adminPassword | quote }}
   serverToServerKey: {{ .Values.application.drive.secrettoServerKey | quote }}
   baseUrl: "https://{{ .Values.global.hostname.drive }}.{{ .Values.global.domain }}"
-  externalMinioAPI: "https://{{ .Values.global.hostname.drive }}-minio.{{ .Values.global.domain }}"
+  externalMinioAPI: "http://{{ .Values.objectstore.drive.endpoint }}:{{ .Values.objectstore.drive.port }}"
   frontendCssUrl: "https://static-{{ .Values.global.hostname.drive }}.{{ .Values.global.domain }}/iframe-hide.css"
   frontendJsUrl: "https://static-{{ .Values.global.hostname.drive }}.{{ .Values.global.domain }}/bureaublad-button.js"
 
   {{ if .Values.application.collabora.enabled }}
   wopiClients: "collabora"
-  collaborDiscoveryUrl: "https://{{ .Values.global.hostname.collabora }}.{{ .Values.global.domain }}/hosting/discovery"
+  collaborDiscoveryUrl: "http://collabora-online:9980/hosting/discovery"
   {{ end }}
 
   celery:
@@ -92,6 +92,7 @@ ingress:
     {{- end }}
     {{- if eq .Values.cluster.ingress.type "nginx" }}
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     {{- end }}

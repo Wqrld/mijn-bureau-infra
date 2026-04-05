@@ -8,7 +8,6 @@
 
 {{- $hostname := printf "%s.%s" .Values.global.hostname.drive .Values.global.domain }}
 {{- $s3HostName := printf "%s:%d" .Values.objectstore.drive.endpoint .Values.objectstore.drive.port }}
-{{- $miniohostname := printf "%s-minio.%s" .Values.global.hostname.drive .Values.global.domain }}
 
 ## @param global.imageRegistry Global Docker image registry
 ## @param global.imagePullSecrets Global Docker registry secret names as an array
@@ -624,7 +623,7 @@ serverBlock: |-
 
       # Get resource from Minio
       proxy_pass {{ printf "http%s://%s" (ternary "s" "" .Values.objectstore.drive.useSSL) $s3HostName }}/{{ .Values.objectstore.drive.bucket }}/;
-      proxy_set_header Host {{ $miniohostname }};
+      proxy_set_header Host {{ $s3HostName }};
 
       proxy_ssl_name {{ $s3HostName }};
 
@@ -647,7 +646,7 @@ serverBlock: |-
 
       # Get resource from Minio
       proxy_pass {{ printf "http%s://%s" (ternary "s" "" .Values.objectstore.drive.useSSL) $s3HostName }}/{{ .Values.objectstore.drive.bucket }}/;
-      proxy_set_header Host {{ $miniohostname }};
+      proxy_set_header Host {{ $s3HostName }};
 
       proxy_ssl_name {{ $s3HostName }};
 

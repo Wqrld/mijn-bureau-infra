@@ -34,6 +34,9 @@ spec:
       {{- end }}
       containers:
         - name: {{ include "common.names.fullname" . }}-wopi
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.fullname" . }}
           env:
             - name: DB_HOST
               value: {{ .Values.externalDatabase.host | quote }}
