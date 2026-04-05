@@ -4,7 +4,7 @@ SPDX-License-Identifier: APACHE-2.0
 */}}
 {{- $envVars := include "docs.common.env" (list . .Values.backend) -}}
 
-{{- range $job, $config := $.Values.backend.jobs.jobs }}
+{{- range $job, $config := (concat $.Values.backend.jobs.jobs $.Values.backend.jobs.extraJobs) }}
 {{- if $config.command }}
 ---
 apiVersion: {{ include "common.capabilities.job.apiVersion" $ }}

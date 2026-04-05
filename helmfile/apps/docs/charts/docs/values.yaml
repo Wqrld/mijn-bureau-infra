@@ -604,6 +604,8 @@ backend:
 
             python manage.py createsuperuser --email $DJANGO_SUPERUSER_EMAIL --password $DJANGO_SUPERUSER_PASSWORD
         restartPolicy: OnFailure
+  ## @param backend.jobs.extraJobs [array] Extra jobs appended to the default jobs list without replacing it.
+  extraJobs: []
   # List of cronjob to add
   # cronJobs:
   #   - name: reset-database

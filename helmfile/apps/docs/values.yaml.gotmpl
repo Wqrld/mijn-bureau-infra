@@ -98,6 +98,26 @@ backend:
           - port: 4444
   jobs:
     releaseSuffix: {{ $releaseId | quote }}
+    {{- if .Values.application.find.enabled }}
+    extraJobs:
+      - name: waffle-flags
+        annotations:
+          argocd.argoproj.io/sync-options: Replace=true,Force=true
+        command:
+          - /bin/sh
+          - "-c"
+          - |
+            while ! python manage.py check --database default > /dev/null 2>&1
+            do
+              echo "Database not ready"
+              sleep 2
+            done
+
+            echo "Database is ready"
+
+            python manage.py shell -c "from waffle.models import Flag; Flag.objects.update_or_create(name='flag_find_full_text_search', defaults={'everyone': True}); Flag.objects.update_or_create(name='flag_find_hybrid_search', defaults={'everyone': True})"
+        restartPolicy: OnFailure
+    {{- end }}
   migrateDbCredentials:
     DB_USER: "postgres"
     DB_PASSWORD: {{ .Values.database.docs.adminpassword | quote }}
@@ -125,6 +145,14 @@ backend:
     CONVERSION_API_ENDPOINT: "convert"
     CONVERSION_API_SECURE: "false"
     DOCSPEC_API_URL: http://docs-docspec:4000/conversion
+    {{- if .Values.application.find.enabled }}
+    # Find - search indexation (requires docs >= v4.8.2, suitenumerique/docs#1834)
+    SEARCH_INDEXER_CLASS: core.services.search_indexers.FindDocumentIndexer
+    SEARCH_INDEXER_COUNTDOWN: "10"
+    SEARCH_INDEXER_SECRET: {{ .Values.application.find.serviceTokenDocs | quote }}
+    INDEXING_URL: http{{ ternary "s" "" (.Values.global.tls.enabled | default true) }}://{{ .Values.global.hostname.find }}.{{ .Values.global.domain }}/api/v1.0/documents/index/
+    SEARCH_URL: http{{ ternary "s" "" (.Values.global.tls.enabled | default true) }}://{{ .Values.global.hostname.find }}.{{ .Values.global.domain }}/api/v1.0/documents/search/
+    {{- end }}
     CRISP_WEBSITE_ID: ""
     DOCUMENT_IMAGE_MAX_SIZE: "10485760"
     FRONTEND_CSS_URL: "https://static-{{ .Values.global.hostname.docs }}.{{ .Values.global.domain }}/iframe-hide.css"
@@ -186,6 +214,7 @@ backend:
     OIDC_RP_CLIENT_SECRET: {{ .Values.authentication.client.docs.client_secret | quote }}
     OIDC_RP_SIGN_ALGO: "RS256"
     OIDC_RP_SCOPES: "openid email"
+    OIDC_STORE_ACCESS_TOKEN: "true"
     OIDC_STORE_ID_TOKEN: "true"
     OIDC_USE_NONCE: "true"
     OIDC_USERINFO_FULLNAME_FIELDS: "{{ .Values.authentication.oidc.claims.given_name }},{{ .Values.authentication.oidc.claims.family_name }}"
@@ -394,6 +423,11 @@ backend:
                 matchLabels:
                   app.kubernetes.io/name: minio
           {{- end }}
+        {{- if .Values.application.find.enabled }}
+        # Find connectivity (for document indexation via INDEXING_URL)
+        - ports:
+            - port: 443
+        {{- end }}
     configuration:
       concurrency:
         min: 3
