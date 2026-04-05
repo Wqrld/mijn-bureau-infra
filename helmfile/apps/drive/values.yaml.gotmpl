@@ -48,6 +48,34 @@ drive:
   collaborDiscoveryUrl: "http://collabora-online:9980/hosting/discovery"
   {{ end }}
 
+  extraEnvVars:
+    - name: AWS_S3_DOMAIN_REPLACE
+      value: "https://{{ index .Values.global.hostname "drive-minio" }}.{{ .Values.global.domain }}"
+    {{- if .Values.application.find.enabled }}
+    - name: FEATURES_INDEXED_SEARCH
+      value: "True"
+    - name: SEARCH_INDEXER_CLASS
+      value: core.services.search_indexers.SearchIndexer
+    - name: SEARCH_INDEXER_COUNTDOWN
+      value: "10"
+    - name: SEARCH_INDEXER_SECRET
+      value: {{ .Values.application.find.serviceTokenDrive | quote }}
+    - name: SEARCH_INDEXER_URL
+      value: "http{{ ternary "s" "" (.Values.global.tls.enabled | default true) }}://{{ .Values.global.hostname.find }}.{{ .Values.global.domain }}/api/v1.0/documents/index/"
+    - name: SEARCH_INDEXER_QUERY_URL
+      value: "http{{ ternary "s" "" (.Values.global.tls.enabled | default true) }}://{{ .Values.global.hostname.find }}.{{ .Values.global.domain }}/api/v1.0/documents/search/"
+    - name: SEARCH_INDEXER_ALLOWED_MIMETYPES
+      value: "text/"
+    - name: SEARCH_INDEXER_CONTENT_MAX_SIZE
+      value: "2097152"
+    - name: OIDC_STORE_ACCESS_TOKEN
+      value: "True"
+    - name: OIDC_STORE_REFRESH_TOKEN
+      value: "True"
+    - name: OIDC_STORE_REFRESH_TOKEN_KEY
+      value: {{ .Values.application.drive.oidcRefreshTokenKey | quote }}
+    {{- end }}
+
   celery:
     resources: {{ .Values.resource.drive.celery | toYaml | nindent 6 }}
     autoscaling:
