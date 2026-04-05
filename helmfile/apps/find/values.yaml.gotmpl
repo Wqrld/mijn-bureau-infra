@@ -1,0 +1,97 @@
+global:
+  imageRegistry: {{ (coalesce .Values.container.find.registry .Values.container.default.registry) | quote }}
+  {{- with (coalesce .Values.container.find.imagePullSecret .Values.container.default.imagePullSecret) }}
+  imagePullSecrets:
+    - name: {{ . | quote }}
+  {{- end }}
+  defaultStorageClass: {{ .Values.pvc.default.storageClass | quote }}
+
+clusterDomain: {{ .Values.cluster.networking.domain | default "cluster.local" | quote }}
+
+find:
+  image:
+    registry: {{ (coalesce .Values.container.find.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.find.repository | quote }}
+    tag: {{ .Values.container.find.tag | quote }}
+
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.find.backend | toYaml | nindent 4 }}
+  podSecurityContext: {{ .Values.security.default.podSecurityContext | toYaml | nindent 4 }}
+  containerSecurityContext: {{ .Values.security.default.containerSecurityContext | toYaml | nindent 4 }}
+  autoscaling:
+    hpa: {{ .Values.autoscaling.horizontal.find.backend | toYaml | nindent 6 }}
+  pdb: {{ .Values.pdb.find.backend | toYaml | nindent 4 }}
+  runtimeClassName: {{ .Values.cluster.runtimeClassName | quote }}
+  secretKey: {{ .Values.application.find.secretKey | quote }}
+  CSRFTrustedOrigins: "https://{{ .Values.global.hostname.find }}.{{ .Values.global.domain }},http://{{ .Values.global.hostname.find }}.{{ .Values.global.domain }}"
+  AllowedHosts: "{{ .Values.global.hostname.find }}.{{ .Values.global.domain }}"
+
+  superuserEmail: {{ .Values.secret.find.adminUser | quote }}
+  superuserPassword: {{ .Values.secret.find.adminPassword | quote }}
+
+  # Find service token for docs indexation (empty string when docs disabled)
+  findServiceTokenDocs: {{ if .Values.application.docs.enabled }}{{ .Values.application.find.serviceTokenDocs | quote }}{{ else }}""{{ end }}
+  # Find service token for drive indexation (empty string when drive disabled)
+  findServiceTokenDrive: {{ if .Values.application.drive.enabled }}{{ .Values.application.find.serviceTokenDrive | quote }}{{ else }}""{{ end }}
+
+  celery:
+    args: ["celery", "-A", "find.celery_app", "worker", "-l", "INFO", "-n", "find@%h", "--concurrency", "2"]
+    resources: {{ .Values.resource.find.celery | toYaml | nindent 6 }}
+    autoscaling:
+      hpa: {{ .Values.autoscaling.horizontal.find.celery | toYaml | nindent 8 }}
+    pdb: {{ .Values.pdb.find.celery | toYaml | nindent 6 }}
+
+ingress:
+  enabled: true
+  hostname: {{ .Values.global.hostname.find }}.{{ .Values.global.domain }}
+  tls: {{ .Values.global.tls.enabled | default true }}
+  selfSigned: {{ and .Values.global.tls.enabled .Values.global.tls.selfSigned | default false }}
+  extraTls: {{ .Values.tls.find | toYaml | nindent 4 }}
+  ingressClassName: {{ .Values.cluster.ingress.className | quote }}
+  annotations:
+    {{- if .Values.cluster.ingress.annotations }}
+    {{ .Values.cluster.ingress.annotations | toYaml | nindent 4 }}
+    {{- end }}
+    {{- if eq .Values.cluster.ingress.type "nginx" }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    {{- end }}
+    {{- if eq .Values.cluster.ingress.type "haproxy-openshift" }}
+    haproxy.router.openshift.io/hsts_header: max-age=31536000;includeSubDomains;preload
+    {{- end }}
+
+job:
+  releaseSuffix: {{ now | unixEpoch | quote }}
+
+externalRedis:
+  host: {{ .Values.cache.find.host | quote }}
+  port: {{ .Values.cache.find.port | quote }}
+  password: {{ .Values.cache.find.password | quote }}
+
+externalDatabase:
+  database: {{ .Values.database.find.name | quote }}
+  username: {{ .Values.database.find.user | quote }}
+  host: {{ .Values.database.find.host | quote }}
+  password: {{ .Values.database.find.password | quote }}
+  port: {{ .Values.database.find.port | quote }}
+
+externalOpenSearch:
+  host: {{ .Values.opensearch.host | quote }}
+  port: {{ .Values.opensearch.port | quote }}
+  password: {{ .Values.opensearch.password | quote }}
+  useSSL: {{ not .Values.opensearch.isInternal | ternary "true" "false" | quote }}
+  verifyCerts: "false"
+
+authentication:
+  issuer: {{ .Values.authentication.oidc.issuer | quote }}
+  authorization_endpoint: {{ .Values.authentication.oidc.authorization_endpoint | quote }}
+  token_endpoint: {{ .Values.authentication.oidc.token_endpoint | quote }}
+  introspection_endpoint: {{ .Values.authentication.oidc.introspection_endpoint | quote }}
+  userinfo_endpoint: {{ .Values.authentication.oidc.userinfo_endpoint | quote }}
+  end_session_endpoint: {{ .Values.authentication.oidc.end_session_endpoint | quote }}
+  jwks_uri: {{ .Values.authentication.oidc.jwks_uri | quote }}
+
+  client:
+    client_id: {{ .Values.authentication.client.find.client_id | quote }}
+    client_secret: {{ .Values.authentication.client.find.client_secret | quote }}

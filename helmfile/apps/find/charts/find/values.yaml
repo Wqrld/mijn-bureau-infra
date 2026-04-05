@@ -1,0 +1,399 @@
+# SPDX-License-Identifier: APACHE-2.0
+
+## @section Global parameters
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  defaultStorageClass: ""
+  security:
+    allowInsecureImages: true
+  compatibility:
+    openshift:
+      adaptSecurityContext: auto
+      omitEmptySeLinuxOptions: false
+
+## @section Common parameters
+
+kubeVersion: ""
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+commonLabels: {}
+commonAnnotations: {}
+clusterDomain: cluster.local
+extraDeploy: []
+
+diagnosticMode:
+  enabled: false
+  command:
+    - sleep
+  args:
+    - infinity
+
+## @section find Parameters
+
+find:
+  image:
+    registry: docker.io
+    repository: lasuite/find
+    tag: v0.0.3
+    digest: ""
+    pullPolicy: Always
+    pullSecrets: []
+    debug: false
+
+  replicaCount: 1
+
+  containerPorts:
+    http: 8000
+
+  resourcesPreset: "nano"
+  resources: {}
+
+  podSecurityContext:
+    enabled: true
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
+    fsGroup: 1001
+
+  containerSecurityContext:
+    enabled: true
+    seLinuxOptions: {}
+    runAsUser: 1001
+    runAsGroup: 1001
+    runAsNonRoot: true
+    privileged: false
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: "RuntimeDefault"
+
+  automountServiceAccountToken: false
+
+  podLabels: {}
+  podAnnotations: {}
+  deploymentAnnotations: {}
+
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate: {}
+
+  hostAliases: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAffinityPreset: ""
+  podAntiAffinityPreset: soft
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  priorityClassName: ""
+  schedulerName: ""
+  runtimeClassName: ""
+  topologySpreadConstraints: []
+  terminationGracePeriodSeconds: ""
+
+  initContainers: []
+  sidecars: []
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  extraContainerPorts: []
+  lifecycleHooks: {}
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 10
+    successThreshold: 1
+
+  customLivenessProbe: {}
+  customReadinessProbe: {}
+  customStartupProbe: {}
+
+  autoscaling:
+    vpa:
+      enabled: false
+      annotations: {}
+      controlledResources: []
+      maxAllowed: {}
+      minAllowed: {}
+      updatePolicy:
+        updateMode: Auto
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPU: ""
+      targetMemory: ""
+
+  pdb:
+    create: true
+    minAvailable: ""
+    maxUnavailable: 1
+
+  secretKey: ""
+  superuserEmail: ""
+  superuserPassword: ""
+  CSRFTrustedOrigins: ""
+  AllowedHosts: ""
+  ## Token shared with docs for indexation (empty when docs integration disabled)
+  findServiceTokenDocs: ""
+  ## Token shared with drive for indexation (empty when drive integration disabled)
+  findServiceTokenDrive: ""
+
+  celery:
+    replicaCount: 1
+    command: []
+    args:
+      - celery
+      - -A
+      - find.celery_app
+      - worker
+      - -l
+      - INFO
+    resources: {}
+    podLabels: {}
+
+    autoscaling:
+      vpa:
+        enabled: false
+        annotations: {}
+        controlledResources: []
+        maxAllowed: {}
+        minAllowed: {}
+        updatePolicy:
+          updateMode: Auto
+      hpa:
+        enabled: false
+        minReplicas: 1
+        maxReplicas: 3
+        targetCPU: ""
+        targetMemory: ""
+
+    pdb:
+      create: true
+      minAvailable: ""
+      maxUnavailable: 1
+
+## @section External Database parameters
+
+externalDatabase:
+  host: ""
+  username: "find"
+  password: ""
+  database: "find"
+  port: 5432
+
+## @section External Redis parameters
+
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+
+## @section External OpenSearch parameters
+
+externalOpenSearch:
+  host: ""
+  port: 9200
+  password: ""
+  useSSL: "true"
+  verifyCerts: "false"
+
+## @section Ingress parameters
+
+ingress:
+  enabled: true
+  hostname: find.local
+  path: /
+  pathType: Prefix
+  tls: false
+  selfSigned: false
+  ingressClassName: ""
+  annotations: {}
+  extraHosts: []
+  extraPaths: []
+  extraTls: []
+  extraRules: []
+  secrets: []
+
+## @section NetworkPolicy parameters
+
+networkPolicy:
+  enabled: true
+  allowExternal: true
+  allowExternalEgress: true
+  addExternalClientAccess: true
+  extraIngress: []
+  extraEgress: []
+  ingressPodMatchLabels: {}
+  ingressNSMatchLabels: {}
+  ingressNSPodMatchLabels: {}
+
+## @section ServiceAccount parameters
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: false
+
+## @section Service parameters
+
+service:
+  type: ClusterIP
+  ports:
+    http: 80
+  nodePorts:
+    http: ""
+  clusterIP: ""
+  loadBalancerIP: ""
+  loadBalancerSourceRanges: []
+  externalTrafficPolicy: Cluster
+  annotations: {}
+  extraPorts: []
+  sessionAffinity: None
+  sessionAffinityConfig: {}
+
+## @section Job parameters
+
+job:
+  ttlSecondsAfterFinished: 100
+  backoffLimit: 6
+  restartPolicy: OnFailure
+  releaseSuffix: ""
+  podAnnotations: {}
+  resources: {}
+  commandMigrate:
+    - /bin/sh
+    - -c
+    - |
+      python manage.py migrate --no-input
+
+      python manage.py shell -c "
+      from django.contrib.auth import get_user_model
+      import os
+      U = get_user_model()
+      email = os.environ.get('DJANGO_SUPERUSER_EMAIL', '')
+      password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', '')
+      if email and password:
+          if not U.objects.filter(email=email).exists():
+              U.objects.create_superuser(username=email, email=email, password=password)
+              print('Superuser created:', email)
+          else:
+              u = U.objects.get(email=email)
+              u.set_password(password)
+              u.is_staff = True
+              u.is_superuser = True
+              u.save()
+              print('Superuser updated:', email)
+      "
+
+      python manage.py shell -c "
+      from core.models import Service
+      import os
+      services = {}
+      if os.environ.get('FIND_SERVICE_TOKEN_DOCS'):
+          svc, _ = Service.objects.update_or_create(
+              name='docs',
+              defaults={
+                  'token': os.environ['FIND_SERVICE_TOKEN_DOCS'],
+                  'client_id': 'docs',
+                  'is_active': True,
+              },
+          )
+          services['docs'] = svc
+          print('Service docs: token=' + svc.token[:8] + '...')
+      if os.environ.get('FIND_SERVICE_TOKEN_DRIVE'):
+          svc, _ = Service.objects.update_or_create(
+              name='drive',
+              defaults={
+                  'token': os.environ['FIND_SERVICE_TOKEN_DRIVE'],
+                  'client_id': 'drive',
+                  'is_active': True,
+              },
+          )
+          services['drive'] = svc
+          print('Service drive: token=' + svc.token[:8] + '...')
+      for svc in services.values():
+          svc.services.set(services.values())
+      print('Find services configured.')
+      "
+  argsMigrate: []
+
+## @section Cluster parameters
+
+cluster:
+  routingMode: "ingress"
+
+## @section Authentication parameters
+
+authentication:
+  issuer: ""
+  authorization_endpoint: ""
+  token_endpoint: ""
+  introspection_endpoint: ""
+  userinfo_endpoint: ""
+  end_session_endpoint: ""
+  jwks_uri: ""
+  client:
+    client_id: ""
+    client_secret: ""
+
+## @section Default init containers parameters
+
+defaultInitContainers:
+  volumePermissions:
+    enabled: false
+    image:
+      registry: docker.io
+      repository: bitnami/os-shell
+      tag: latest
+      pullPolicy: IfNotPresent
+
+persistence:
+  enabled: false
+
+## @section Prometheus metrics parameters
+
+metrics:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+    annotations: {}
+    labels: {}
+    jobLabel: ""
+    honorLabels: false
+    tlsConfig: {}
+    interval: ""
+    scrapeTimeout: ""
+    metricRelabelings: []
+    relabelings: []
+    selector: {}

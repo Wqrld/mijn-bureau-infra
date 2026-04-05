@@ -110,6 +110,15 @@ application:
     namespace: ~
     secretKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "drive" "secretkey" | sha1sum | quote }}
     secrettoServerKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "drive" "secrettoServerKey" | sha1sum | quote }}
+    oidcRefreshTokenKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "drive" "oidcRefreshTokenKey" | sha256sum | trunc 32 | b64enc | replace "+" "-" | replace "/" "_" | quote }}
+
+  # find is a cross-app full-text search engine from LaSuite (integrates with docs)
+  find:
+    enabled: true
+    namespace: ~
+    secretKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "secretKey" | sha1sum | quote }}
+    serviceTokenDocs: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "service-docs" | sha256sum | trunc 50 | quote }}
+    serviceTokenDrive: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "service-drive" | sha256sum | trunc 50 | quote }}
 
   # Clam AV is a virus toolkit
   clamav:

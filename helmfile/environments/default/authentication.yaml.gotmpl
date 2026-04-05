@@ -48,3 +48,6 @@ authentication:
     drive:
       client_id: "drive"
       client_secret: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD" ) "keycloak" "drive_client_secret" | sha1sum | quote}}
+    find:
+      client_id: "find"
+      client_secret: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "keycloak" "find_client_secret" | sha1sum | quote }}

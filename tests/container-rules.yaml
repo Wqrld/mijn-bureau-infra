@@ -147,3 +147,11 @@ container:
   nginx:
     registry: ""
     imagePullSecret: ""
+
+  opensearch:
+    registry: ""
+    imagePullSecret: ""
+
+  find:
+    registry: ""
+    imagePullSecret: ""

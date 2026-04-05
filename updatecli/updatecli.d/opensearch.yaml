@@ -1,0 +1,46 @@
+name: "Update opensearch container tags"
+
+scms:
+  default:
+    kind: "github"
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: "{{ .github.owner }}"
+      repository: "{{ .github.repository }}"
+      username: "{{ .github.username }}"
+      branch: "{{ .github.branch }}"
+      commitmessage:
+        title: Bump opensearch version to {{ source "opensearch_latest_version" }}
+        hidecredit: true
+        squash: true
+        type: "⬆️(deps)"
+
+sources:
+  opensearch_latest_version:
+    name: "Get latest opensearch tag"
+    kind: dockerimage
+    spec:
+      image: "opensearchproject/opensearch"
+      architecture: amd64
+      tagfilter: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      versionfilter:
+        kind: semver
+        pattern: "~3"
+
+targets:
+  update_opensearch_tag:
+    name: "Update opensearch container tag"
+    kind: yaml
+    spec:
+      engine: yamlpath
+      file: "helmfile/environments/default/container.yaml.gotmpl"
+      key: "$.container.opensearch.tag"
+    sourceid: opensearch_latest_version
+    scmid: default
+
+actions:
+  default:
+    scmid: default
+    kind: github/pullrequest
+    title: ⬆️(deps) Bump opensearch version to {{ source "opensearch_latest_version" }}

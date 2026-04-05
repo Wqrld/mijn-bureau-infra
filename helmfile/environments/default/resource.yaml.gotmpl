@@ -19,6 +19,13 @@ resource:
     redis:
 
   collabora:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 3Gi
+      cpu: 2
+
 
   synapse:
     master:
@@ -86,5 +93,12 @@ resource:
     celery:
     celeryBeat:
     nginx:
+
+  find:
+    backend:
+    celery:
+    postgresql:
+    redis:
+    opensearch:
 
   clamav:

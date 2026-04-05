@@ -1,0 +1,40 @@
+#
+# SPDX-License-Identifier: APACHE-2.0
+
+global:
+  imageRegistry: {{ (coalesce .Values.container.redis.registry .Values.container.default.registry) | quote }}
+  {{- with (coalesce .Values.container.redis.imagePullSecret .Values.container.default.imagePullSecret) }}
+  imagePullSecrets:
+    - name: {{ . | quote }}
+  {{- end }}
+  defaultStorageClass: {{ .Values.pvc.default.storageClass | quote }}
+  security:
+    allowInsecureImages: true
+  redis:
+    password: ""
+  compatibility:
+    openshift:
+      adaptSecurityContext: auto
+
+clusterDomain: {{ .Values.cluster.networking.domain | default "cluster.local" | quote }}
+
+architecture: standalone
+
+master:
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.find.redis | default dict | toYaml | nindent 4 }}
+
+auth:
+  enabled: true
+  password: {{ .Values.cache.find.password | quote }}
+
+image:
+  registry: {{ (coalesce .Values.container.redis.registry .Values.container.default.registry) | quote }}
+  repository: {{ .Values.container.redis.repository | default "bitnami/redis" | quote }}
+  tag: {{ .Values.container.redis.tag | default "8.0.3-debian-12-r1" | quote }}
+  digest: ""
+  pullPolicy: Always
+  {{- with (coalesce .Values.container.redis.imagePullSecret .Values.container.default.imagePullSecret) }}
+  pullSecrets:
+    - name: {{ . | quote }}
+  {{- end }}

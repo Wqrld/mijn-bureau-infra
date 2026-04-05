@@ -34,6 +34,10 @@ global:
       frontend: "xlarge"
 
 resource:
+  find:
+    postgresql:
+    redis:
+    opensearch:
   openproject:
     openproject:
     dbInit:

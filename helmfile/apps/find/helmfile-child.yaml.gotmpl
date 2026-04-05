@@ -1,0 +1,49 @@
+bases:
+  - "../../bases/default.yaml.gotmpl"
+
+releases:
+  - name: find-postgresql
+    chart: ../common/charts/postgresql
+    version: "16.7.18"
+    {{- if .Values.application.find.namespace }}
+    namespace: {{ .Values.application.find.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") ( .Values.application.find.enabled) | toYaml }}
+    values:
+      - "values-postgresql.yaml.gotmpl"
+
+  - name: find-redis
+    chart: ../common/charts/redis
+    version: "21.2.6"
+    {{- if .Values.application.find.namespace }}
+    namespace: {{ .Values.application.find.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") ( .Values.application.find.enabled) | toYaml }}
+    values:
+      - "values-redis.yaml.gotmpl"
+
+  - name: find-opensearch
+    chart: ../common/charts/opensearch
+    version: "3.5.0"
+    {{- if .Values.application.find.namespace }}
+    namespace: {{ .Values.application.find.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") ( .Values.application.find.enabled) | toYaml }}
+    values:
+      - "values-opensearch.yaml.gotmpl"
+
+  - name: find
+    chart: charts/find
+    condition: application.find.enabled
+    {{- if .Values.application.find.namespace }}
+    namespace: {{ .Values.application.find.namespace }}
+    {{- end }}
+    {{- if and (eq .Environment.Name "demo") ( .Values.application.find.enabled) }}
+    needs:
+      - {{ if .Values.application.find.namespace }}{{ .Values.application.find.namespace }}/{{ end }}find-postgresql
+      - {{ if .Values.application.find.namespace }}{{ .Values.application.find.namespace }}/{{ end }}find-redis
+      - {{ if .Values.application.find.namespace }}{{ .Values.application.find.namespace }}/{{ end }}find-opensearch
+    {{- end }}
+    values:
+      - "../common/values-cluster-ingress.yaml.gotmpl"
+      - "values.yaml.gotmpl"

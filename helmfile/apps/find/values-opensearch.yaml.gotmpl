@@ -1,0 +1,33 @@
+#
+# SPDX-License-Identifier: APACHE-2.0
+
+# global.dockerRegistry is the official opensearch chart's equivalent of bitnami's global.imageRegistry
+global:
+  dockerRegistry: {{ (coalesce .Values.container.opensearch.registry .Values.container.default.registry) | quote }}
+
+# Service name = clusterName + "-" + nodeGroup
+# "find" + "-" + "opensearch" = "find-opensearch" (matches existing DNS config in opensearch.yaml.gotmpl)
+clusterName: "find"
+nodeGroup: "opensearch"
+
+singleNode: true
+replicas: 1
+
+image:
+  repository: {{ .Values.container.opensearch.repository | default "opensearchproject/opensearch" | quote }}
+  tag: {{ .Values.container.opensearch.tag | default "3.5.0" | quote }}
+  pullPolicy: Always
+
+extraEnvs:
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    value: {{ .Values.opensearch.password | quote }}
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: {{ .Values.pvc.default.storageClass | quote }}
+
+resources: {{ .Values.resource.find.opensearch | default dict | toYaml | nindent 2 }}
+
+sysctlInit:
+  enabled: true

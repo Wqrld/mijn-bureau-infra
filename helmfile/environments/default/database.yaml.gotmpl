@@ -89,3 +89,13 @@ database:
     isInternal: true
     password: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD" ) "drive" "database" | sha1sum | quote}}
     adminpassword: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD" ) "drive" "database_admin" | sha1sum | quote}}
+
+  find:
+    type: postgresql
+    name: find
+    host: find-postgresql
+    port: 5432
+    isInternal: true
+    user: find
+    password: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "database" | sha1sum | quote }}
+    adminpassword: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "database_admin" | sha1sum | quote }}

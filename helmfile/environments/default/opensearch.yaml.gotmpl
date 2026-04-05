@@ -1,0 +1,7 @@
+opensearch:
+  host: "find-opensearch"
+  port: 9200
+  isInternal: true
+  # !Os0 suffix satisfies OpenSearch admin password complexity requirements
+  # (requires uppercase, lowercase, digit, and special character)
+  password: {{ printf "%s!Os0" (derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "opensearch" "adminPassword" | sha1sum) | quote }}

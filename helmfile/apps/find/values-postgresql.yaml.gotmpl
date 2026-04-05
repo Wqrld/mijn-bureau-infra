@@ -1,0 +1,55 @@
+#
+# SPDX-License-Identifier: APACHE-2.0
+
+global:
+  imageRegistry: ""
+  {{- with (coalesce .Values.container.postgres.imagePullSecret .Values.container.default.imagePullSecret) }}
+  imagePullSecrets:
+    - {{ . | quote }}
+  {{- end }}
+  defaultStorageClass: {{ coalesce .Values.pvc.find.postgresql.storageClass .Values.pvc.default.storageClass | quote }}
+  security:
+    allowInsecureImages: true
+  postgresql:
+    fullnameOverride: ""
+    auth:
+      postgresPassword: ""
+      username: ""
+      password: ""
+      database: ""
+      existingSecret: ""
+      secretKeys:
+        adminPasswordKey: ""
+        userPasswordKey: ""
+        replicationPasswordKey: ""
+    service:
+      ports:
+        postgresql: ""
+  compatibility:
+    openshift:
+      adaptSecurityContext: auto
+
+clusterDomain: {{ .Values.cluster.networking.domain | default "cluster.local" | quote }}
+
+auth:
+  postgresPassword: {{ .Values.database.find.adminpassword | quote }}
+  username: {{ .Values.database.find.user | quote }}
+  password: {{ .Values.database.find.password | quote }}
+  database: {{ .Values.database.find.name | quote }}
+
+architecture: standalone
+
+primary:
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.find.postgresql | default dict | toYaml | nindent 4 }}
+
+image:
+  registry: {{ coalesce .Values.container.postgres.registry .Values.container.default.registry | default "docker.io" | quote }}
+  repository: {{ .Values.container.postgres.repository | default "bitnami/postgresql" | quote }}
+  tag: {{ .Values.container.postgres.tag | default "17.5.0-debian-12-r18" | quote }}
+  digest: ""
+  pullPolicy: Always
+  {{- with (coalesce .Values.container.postgres.imagePullSecret .Values.container.default.imagePullSecret) }}
+  pullSecrets:
+    - {{ . | quote }}
+  {{- end }}

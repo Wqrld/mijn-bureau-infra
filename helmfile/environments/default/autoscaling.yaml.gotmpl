@@ -138,6 +138,19 @@ autoscaling:
         maxReplicas: 3
         targetCPU: 80
         targetMemory: ""
+    find:
+      backend:
+        enabled: true
+        minReplicas: 1
+        maxReplicas: 3
+        targetCPU: 80
+        targetMemory: ""
+      celery:
+        enabled: true
+        minReplicas: 1
+        maxReplicas: 3
+        targetCPU: 80
+        targetMemory: ""
     clamav:
       enabled: true
       minReplicas: 1
@@ -191,6 +204,15 @@ autoscaling:
           updateMode: Auto
       yProvider:
         enabled: false
+        annotations: {}
+        controlledResources: []
+        maxAllowed: {}
+        minAllowed: {}
+        updatePolicy:
+          updateMode: Auto
+    find:
+      backend:
+        enabled: true
         annotations: {}
         controlledResources: []
         maxAllowed: {}

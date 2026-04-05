@@ -1,0 +1,93 @@
+{{- /*
+
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "common.names.fullname" . }}-migrate-{{ .Values.job.releaseSuffix }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: find-migrate
+  {{- if .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished | default 100 }}
+  backoffLimit:  {{ .Values.job.backoffLimit | default 6 }}
+  template:
+    metadata:
+      labels: {{- include "common.labels.matchLabels" . | nindent 8 }}
+        app.kubernetes.io/component: find-migrate
+      {{- if .Values.job.podAnnotations }}
+      annotations:
+        {{- include "common.tplvalues.render" (dict "value" .Values.job.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "find.imagePullSecrets" . | nindent 6 }}
+      restartPolicy: {{ .Values.job.restartPolicy | default "OnFailure" }}
+      serviceAccountName: {{ template "find.serviceAccountName" . }}
+      {{- if .Values.find.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" ( dict "value" .Values.find.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.find.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.find.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "common.names.fullname" . }}-migrate
+          env:
+            - name: DB_HOST
+              value: {{ .Values.externalDatabase.host | quote }}
+            - name: DB_NAME
+              value: {{ .Values.externalDatabase.database | quote }}
+            - name: DB_USER
+              value: {{ .Values.externalDatabase.username | quote }}
+            - name: DB_PASSWORD
+              value: {{ .Values.externalDatabase.password | quote }}
+            - name: DB_PORT
+              value: {{ .Values.externalDatabase.port | quote }}
+            - name: DJANGO_CONFIGURATION
+              value: Production
+            - name: DJANGO_SETTINGS_MODULE
+              value: find.settings
+            - name: DJANGO_SECRET_KEY
+              value: {{ .Values.find.secretKey | quote }}
+            - name: OPENSEARCH_HOST
+              value: {{ .Values.externalOpenSearch.host | quote }}
+            - name: OPENSEARCH_PORT
+              value: {{ .Values.externalOpenSearch.port | quote }}
+            - name: OPENSEARCH_USER
+              value: admin
+            - name: OPENSEARCH_PASSWORD
+              value: {{ .Values.externalOpenSearch.password | quote }}
+            - name: OPENSEARCH_USE_SSL
+              value: {{ .Values.externalOpenSearch.useSSL | quote }}
+            - name: OPENSEARCH_VERIFY_CERTS
+              value: {{ .Values.externalOpenSearch.verifyCerts | quote }}
+            {{- if .Values.find.findServiceTokenDocs }}
+            - name: FIND_SERVICE_TOKEN_DOCS
+              value: {{ .Values.find.findServiceTokenDocs | quote }}
+            {{- end }}
+            {{- if .Values.find.findServiceTokenDrive }}
+            - name: FIND_SERVICE_TOKEN_DRIVE
+              value: {{ .Values.find.findServiceTokenDrive | quote }}
+            {{- end }}
+          image: {{ template "find.image" . }}
+          imagePullPolicy: {{ .Values.find.image.pullPolicy }}
+          {{- if .Values.find.containerSecurityContext.enabled }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.find.containerSecurityContext "context" $) | nindent 12 }}
+          {{- end }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.job.commandMigrate "context" $) | nindent 10 }}
+          {{- if .Values.job.argsMigrate }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.job.argsMigrate "context" $) | nindent 10 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.job.resources | nindent 12 }}
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
