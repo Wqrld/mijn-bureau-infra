@@ -117,6 +117,8 @@ backend:
 
             python manage.py shell -c "from waffle.models import Flag; Flag.objects.update_or_create(name='flag_find_full_text_search', defaults={'everyone': True}); Flag.objects.update_or_create(name='flag_find_hybrid_search', defaults={'everyone': True})"
         restartPolicy: OnFailure
+    {{- else }}
+    extraJobs: []
     {{- end }}
   migrateDbCredentials:
     DB_USER: "postgres"
@@ -216,6 +218,8 @@ backend:
     OIDC_RP_SCOPES: "openid email"
     OIDC_STORE_ACCESS_TOKEN: "true"
     OIDC_STORE_ID_TOKEN: "true"
+    OIDC_STORE_REFRESH_TOKEN: "true"
+    OIDC_STORE_REFRESH_TOKEN_KEY: {{ .Values.application.docs.oidcRefreshTokenKey | quote }}
     OIDC_USE_NONCE: "true"
     OIDC_USERINFO_FULLNAME_FIELDS: "{{ .Values.authentication.oidc.claims.given_name }},{{ .Values.authentication.oidc.claims.family_name }}"
     OIDC_USERINFO_SHORTNAME_FIELD: {{ .Values.authentication.oidc.claims.display_name | quote }}

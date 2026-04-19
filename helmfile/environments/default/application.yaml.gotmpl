@@ -96,6 +96,7 @@ application:
       publishAsMit: false
     yProvider:
       key: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "docs" "yProviderKey" | sha1sum | quote }}
+    oidcRefreshTokenKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "docs" "oidcRefreshTokenKey" | sha256sum | trunc 32 | b64enc | replace "+" "-" | replace "/" "_" | quote }}
 
   bureaublad:
     enabled: true

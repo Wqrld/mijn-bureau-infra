@@ -21,6 +21,10 @@ image:
 extraEnvs:
   - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
     value: {{ .Values.opensearch.password | quote }}
+  # Disable security plugin so OpenSearch listens on plain HTTP (port 9200)
+  # This is safe for internal-only OpenSearch instances
+  - name: DISABLE_SECURITY_PLUGIN
+    value: "true"
 
 persistence:
   enabled: true
