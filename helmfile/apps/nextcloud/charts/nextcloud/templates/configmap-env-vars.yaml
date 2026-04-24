@@ -52,6 +52,7 @@ data:
   OBJECTSTORE_S3_REGION: {{ .Values.externalMinio.region | quote }}
   OBJECTSTORE_S3_SSL: {{ .Values.externalMinio.useSSL | quote }}
   OBJECTSTORE_S3_USEPATH_STYLE: {{ .Values.externalMinio.pathStyle | default "true" | quote }}
+  OBJECTSTORE_S3_REGION: {{ .Values.externalMinio.region | default "us-east-1" | quote }}
   OBJECTSTORE_S3_LEGACYAUTH: {{ .Values.externalMinio.legacyAuth | quote }}
   OBJECTSTORE_S3_AUTOCREATE: {{ .Values.externalMinio.autocreate | quote }}
   {{/*
