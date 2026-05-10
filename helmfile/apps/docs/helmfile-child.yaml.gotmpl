@@ -1,8 +1,15 @@
 bases:
+  - "../../bases/child-environments.yaml"
+
+---
+
+bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: docs-postgresql
+    labels:
+      tier: infra
     chart: ../common/charts/postgresql
     version: "16.7.18"
     {{- if .Values.application.docs.namespace }}
@@ -13,6 +20,8 @@ releases:
       - "values-postgresql.yaml.gotmpl"
 
   - name: docs-cluster-credentials
+    labels:
+      tier: infra
     chart: ../common/charts/cnpg-cluster-credentials
     {{- if .Values.application.docs.namespace }}
     namespace: {{ .Values.application.docs.namespace }}
@@ -22,6 +31,8 @@ releases:
       - "values-cnpg-cluster-credentials.yaml.gotmpl"
 
   - name: docs-cluster
+    labels:
+      tier: infra
     chart: ../common/charts/cluster
     {{- if .Values.application.docs.namespace }}
     namespace: {{ .Values.application.docs.namespace }}
@@ -33,6 +44,8 @@ releases:
       - "values-cnpg-cluster.yaml.gotmpl"
 
   - name: docs-redis
+    labels:
+      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.docs.namespace }}
@@ -43,6 +56,8 @@ releases:
       - "values-redis.yaml.gotmpl"
 
   - name: docs-minio
+    labels:
+      tier: infra
     chart: ../common/charts/minio
     version: "17.0.11"
     {{- if .Values.application.docs.namespace }}
@@ -54,6 +69,8 @@ releases:
       - "values-minio.yaml.gotmpl"
 
   - name: docs
+    labels:
+      tier: app
     chart: charts/docs
     condition: application.docs.enabled
     {{- if .Values.application.docs.namespace }}
@@ -74,6 +91,8 @@ releases:
       - "values.yaml.gotmpl"
 
   - name: docs-nginx
+    labels:
+      tier: app
     chart: ../common/charts/nginx
     version: "22.0.0"
     {{- if .Values.application.docs.namespace }}
@@ -87,6 +106,8 @@ releases:
       - "values-nginx.yaml.gotmpl"
 
   - name: docs-static
+    labels:
+      tier: app
     chart: ../common/charts/nginx
     version: "22.0.0"
     {{- if .Values.application.docs.namespace }}

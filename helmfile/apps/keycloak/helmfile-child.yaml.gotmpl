@@ -1,8 +1,15 @@
 bases:
+  - "../../bases/child-environments.yaml"
+
+---
+
+bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: "keycloak-keycloak"
+    labels:
+      tier: app
     chart: charts/keycloak
     version: "24.6.7"
     {{- if .Values.application.keycloak.namespace }}
@@ -22,6 +29,8 @@ releases:
       - keycloak.yaml.gotmpl
 
   - name: "keycloak-postgresql"
+    labels:
+      tier: infra
     chart: ../common/charts/postgresql
     version: " 16.7.18"
     {{- if .Values.application.keycloak.namespace }}
@@ -32,6 +41,8 @@ releases:
       - "postgresql.yaml.gotmpl"
 
   - name: keycloak-cluster-credentials
+    labels:
+      tier: infra
     chart: ../common/charts/cnpg-cluster-credentials
     {{- if .Values.application.keycloak.namespace }}
     namespace: {{ .Values.application.keycloak.namespace }}
@@ -41,6 +52,8 @@ releases:
       - "values-cnpg-cluster-credentials.yaml.gotmpl"
 
   - name: keycloak-cluster
+    labels:
+      tier: infra
     chart: ../common/charts/cluster
     {{- if .Values.application.keycloak.namespace }}
     namespace: {{ .Values.application.keycloak.namespace }}

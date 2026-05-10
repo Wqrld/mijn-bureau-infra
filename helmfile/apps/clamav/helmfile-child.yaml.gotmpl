@@ -1,8 +1,15 @@
 bases:
+  - "../../bases/child-environments.yaml"
+
+---
+
+bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: clamav
+    labels:
+      tier: app
     chart: charts/clamav
     condition: application.clamav.enabled
     {{- if .Values.application.clamav.namespace }}

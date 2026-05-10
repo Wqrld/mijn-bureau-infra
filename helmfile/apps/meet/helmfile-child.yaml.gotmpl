@@ -1,8 +1,15 @@
 bases:
+  - "../../bases/child-environments.yaml"
+
+---
+
+bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: meet
+    labels:
+      tier: app
     chart: charts/meet
     condition: application.meet.enabled
     {{- if .Values.application.meet.namespace }}
@@ -29,6 +36,8 @@ releases:
       - "values.yaml.gotmpl"
 
   - name: meet-postgresql
+    labels:
+      tier: infra
     chart: ../common/charts/postgresql
     version: "16.7.18"
     {{- if .Values.application.meet.namespace }}
@@ -39,6 +48,8 @@ releases:
       - "values-postgresql.yaml.gotmpl"
 
   - name: meet-cluster-credentials
+    labels:
+      tier: infra
     chart: ../common/charts/cnpg-cluster-credentials
     {{- if .Values.application.meet.namespace }}
     namespace: {{ .Values.application.meet.namespace }}
@@ -48,6 +59,8 @@ releases:
       - "values-cnpg-cluster-credentials.yaml.gotmpl"
 
   - name: meet-cluster
+    labels:
+      tier: infra
     chart: ../common/charts/cluster
     {{- if .Values.application.meet.namespace }}
     namespace: {{ .Values.application.meet.namespace }}
@@ -59,6 +72,8 @@ releases:
       - "values-cnpg-cluster.yaml.gotmpl"
 
   - name: meet-redis
+    labels:
+      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.meet.namespace }}
@@ -69,6 +84,8 @@ releases:
       - "values-redis.yaml.gotmpl"
 
   - name: meet-static
+    labels:
+      tier: app
     chart: ../common/charts/nginx
     version: "22.0.0"
     {{- if .Values.application.meet.namespace }}

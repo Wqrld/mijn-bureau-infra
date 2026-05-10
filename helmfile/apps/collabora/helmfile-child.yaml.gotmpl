@@ -1,8 +1,15 @@
 bases:
+  - "../../bases/child-environments.yaml"
+
+---
+
+bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: "collabora-online"
+    labels:
+      tier: app
     chart: "charts/collabora"
     condition: application.collabora.enabled
     {{- if .Values.application.collabora.namespace }}
