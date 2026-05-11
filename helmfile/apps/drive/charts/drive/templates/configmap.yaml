@@ -24,7 +24,7 @@ data:
   LOGIN_REDIRECT_URL: {{ .Values.drive.baseUrl | quote }}
   LOGIN_REDIRECT_URL_FAILURE: {{ .Values.drive.baseUrl | quote }}
   LOGOUT_REDIRECT_URL: {{ .Values.drive.baseUrl | quote }}
-  FRONTEND_HIDE_GAUFRE: "true"
+  FRONTEND_HIDE_GAUFRE: "false"
   DB_HOST: {{ .Values.externalDatabase.host | quote }}
   DB_NAME: {{ .Values.externalDatabase.database | quote }}
   DB_USER: {{ .Values.externalDatabase.username | quote }}

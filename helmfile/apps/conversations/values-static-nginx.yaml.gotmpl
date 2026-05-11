@@ -119,61 +119,6 @@ extraDeploy:
           }
         })();
       iframe-hide.css: |
-        /* Hide logout button - users log out via bureaublad */
-        .--docs--button-logout {
-          display: none !important;
-        }
-
-        /* Hide feedback button in header (before login) */
-        .--docs--home-header .c__button--info {
-          display: none !important;
-        }
-
-        /* Hide feedback button (after login) */
-        .c__button--feedback {
-          display: none !important;
-        }
-
-        #gaufre_button {
-          display: none !important;
-        }
-
-        /* Replace modal close icon with literal "X" */
-        .c__modal__close .material-icons {
-          font-family: inherit !important;
-          font-weight: 700 !important;
-          font-size: 1rem !important;
-          line-height: 1 !important;
-        }
-        .c__modal__close .material-icons::before {
-          content: "X";
-        }
-        .c__modal__close .material-icons {
-          text-indent: -9999px;
-        }
-        .c__modal__close .material-icons::before {
-          float: left;
-          text-indent: 0;
-        }
-
-        /* Hide attach file and research web buttons */
-        button[aria-label="Add attach file"],
-        button[aria-label="Ajouter attach file"],
-        .research-web-button {
-          display: none !important;
-        }
-
-        /* Hide logo - shown via bureaublad */
-        [data-testid="header-logo-link"],
-        a[href="/"] svg[aria-label="Assistant Logo"] {
-          display: none !important;
-        }
-
-        /* Push remaining header buttons to the right */
-        .--docs--header-block-right {
-          margin-left: auto !important;
-        }
-
         /* Use Inter font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
