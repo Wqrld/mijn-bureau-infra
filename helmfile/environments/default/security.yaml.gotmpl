@@ -33,6 +33,20 @@ security:
       enabled: true
       fsGroup: 1001
 
+  calendars:
+    # CalDAV (SabreDAV PHP/Apache) needs relaxed security context
+    caldav:
+      containerSecurityContext:
+        enabled: true
+        runAsUser: 33
+        runAsGroup: 33
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - "ALL"
+
   openproject:
     containerSecurityContext:
       enabled: true

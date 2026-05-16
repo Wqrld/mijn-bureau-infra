@@ -51,3 +51,6 @@ authentication:
     find:
       client_id: "find"
       client_secret: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "keycloak" "find_client_secret" | sha1sum | quote }}
+    calendars:
+      client_id: "calendars"
+      client_secret: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "keycloak" "calendars_client_secret" | sha1sum | quote }}

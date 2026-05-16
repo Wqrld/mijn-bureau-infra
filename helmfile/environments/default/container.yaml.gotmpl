@@ -171,6 +171,18 @@ container:
     frontend:
       repository: "minbzk/bureaublad-frontend"
       tag: "v0.6.1"
+  calendars:
+    imagePullSecret: ~
+    registry: "ghcr.io"
+    frontend:
+      repository: "suitenumerique/calendars-frontend"
+      tag: "main"
+    backend:
+      repository: "suitenumerique/calendars-backend"
+      tag: "main"
+    caldav:
+      repository: "suitenumerique/calendars-caldav"
+      tag: "main"
   clamav:
     registry: "registry-1.docker.io"
     repository: "clamav/clamav"

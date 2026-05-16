@@ -189,8 +189,8 @@ This reduces gotmpl template complexity and makes intent more explicit. Minor sa
 | Change | Status | Impact on single-app deploy | Impact on full deploy |
 |--------|--------|-----------------------------|-----------------------|
 | 1. Per-app entry points via `child-environments.yaml` | Implemented | ~8 min → ~5 min | None (keeps monolithic path) |
-| 2. Tier labels + `deploy-app.sh` | Implemented | ~5 min → ~20s (app-only fast path) | Single invocation, `needs:` DAG handles ordering |
+| 2. Tier labels + `deploy-app.sh` | Implemented | ~5 min → ~35s (app-only fast path) | Single invocation, `needs:` DAG handles ordering |
 | 3. Explicit concurrency + `wait: false` | Proposed | Minor | ~15 min → ~8 min |
 | 4. `condition:` over `installed:` | Proposed | Minor template speedup | Minor template speedup |
 
-**Changes 1 + 2 together** get a single application iterative deploy from 8 minutes to ~20 seconds for the common case (app code change, infra already running). For full deploys with `--with-infra`, a single helmfile invocation resolves the complete DAG — no orchestration needed in the script.
+**Changes 1 + 2 together** get a single application iterative deploy from 8 minutes to ~35 seconds for the common case (app code change, infra already running). For full deploys with `--with-infra`, a single helmfile invocation resolves the complete DAG — no orchestration needed in the script.

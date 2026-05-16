@@ -13,6 +13,7 @@
 #   -e <env>        Helmfile environment (default: demo)
 #   --diff          Run 'diff' instead of 'apply'
 #   --sync          Run 'sync' instead of 'apply' (no wait)
+#   --template      Run 'template' instead of 'apply' (render manifests to stdout)
 #
 # Examples:
 #   ./scripts/deploy-app.sh drive                        # app only (fast path)
@@ -21,6 +22,7 @@
 #   ./scripts/deploy-app.sh drive nextcloud --with-infra # multiple apps with infra
 #   ./scripts/deploy-app.sh drive -e production          # production app deploy
 #   ./scripts/deploy-app.sh drive --diff                 # preview changes
+#   ./scripts/deploy-app.sh drive --template             # render manifests locally
 #   ./scripts/deploy-app.sh drive --update-deps          # rebuild chart deps first
 
 set -euo pipefail
@@ -52,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     --update-deps)  UPDATE_DEPS=true; shift ;;
     --diff)         CMD="diff"; shift ;;
     --sync)         CMD="sync"; shift ;;
+    --template)     CMD="template"; shift ;;
     -e)             ENV="$2"; shift 2 ;;
     -h|--help)      usage ;;
     -*)             echo "Unknown option: $1"; usage ;;
@@ -80,7 +83,11 @@ deploy_app() {
     exit 1
   fi
 
-  echo "==> Deploying ${app} (env: ${ENV}, cmd: ${CMD})"
+  if [[ "$CMD" == "template" ]]; then
+    echo "==> Rendering ${app} (env: ${ENV})"
+  else
+    echo "==> Deploying ${app} (env: ${ENV}, cmd: ${CMD})"
+  fi
 
   if $UPDATE_DEPS; then
     echo "  Updating chart dependencies..."

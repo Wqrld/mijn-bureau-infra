@@ -1,0 +1,279 @@
+{{- $hostname := printf "%s.%s" .Values.global.hostname.calendars .Values.global.domain }}
+{{- $sslPostfix := ternary "s" "" (.Values.global.tls.enabled | default true) }}
+{{- $baseUrl := printf "http%s://%s" $sslPostfix $hostname }}
+{{- $redisUrl := printf "redis://default:%s@%s:%d/1" .Values.cache.calendars.password .Values.cache.calendars.host (.Values.cache.calendars.port | int) -}}
+
+global:
+  security:
+    allowInsecureImages: true
+
+  {{- with (coalesce .Values.container.calendars.imagePullSecret .Values.container.default.imagePullSecret) }}
+  imagePullSecrets:
+    - name: {{ . | quote }}
+  {{- end }}
+
+commonLabels:
+  app.kubernetes.io/part-of: calendars
+
+clusterDomain: {{ .Values.cluster.networking.domain | default "cluster.local" | quote }}
+
+frontend:
+  image:
+    registry: {{ (coalesce .Values.container.calendars.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.calendars.frontend.repository | quote }}
+    tag: {{ .Values.container.calendars.frontend.tag | quote }}
+  replicaCount: 1
+  containerPorts:
+    http: 8080
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.calendars.frontend | toYaml | nindent 4 }}
+  podSecurityContext: {{ .Values.security.default.podSecurityContext | toYaml | nindent 4 }}
+  containerSecurityContext:
+    {{- .Values.security.default.containerSecurityContext | toYaml | nindent 4 }}
+    capabilities:
+      drop:
+        - ALL
+      add:
+        - NET_BIND_SERVICE
+  runtimeClassName: {{ .Values.cluster.runtimeClassName | quote }}
+  pdb: {{ .Values.pdb.calendars.frontend | toYaml | nindent 4 }}
+  autoscaling:
+    hpa: {{ .Values.autoscaling.horizontal.calendars.frontend | toYaml | nindent 6 }}
+  envVars:
+    NEXT_PUBLIC_API_ORIGIN: {{ $baseUrl | quote }}
+    NEXT_PUBLIC_BACKEND_URL: {{ $baseUrl | quote }}
+
+backend:
+  image:
+    registry: {{ (coalesce .Values.container.calendars.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.calendars.backend.repository | quote }}
+    tag: {{ .Values.container.calendars.backend.tag | quote }}
+  replicaCount: 1
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.calendars.backend | toYaml | nindent 4 }}
+  podSecurityContext: {{ .Values.security.default.podSecurityContext | toYaml | nindent 4 }}
+  containerSecurityContext: {{ .Values.security.default.containerSecurityContext | toYaml | nindent 4 }}
+  runtimeClassName: {{ .Values.cluster.runtimeClassName | quote }}
+  pdb: {{ .Values.pdb.calendars.backend | toYaml | nindent 4 }}
+  autoscaling:
+    hpa: {{ .Values.autoscaling.horizontal.calendars.backend | toYaml | nindent 6 }}
+  networkPolicy:
+    extraEgress:
+      # Database connectivity
+      - ports:
+          - port: {{ .Values.database.calendars.port }}
+            protocol: TCP
+        {{- if .Values.database.calendars.isInternal }}
+        to:
+          - podSelector:
+              matchLabels:
+                {{- if eq (.Values.database.default.provider | default "bitnami") "cnpg" }}
+                cnpg.io/cluster: calendars-cluster
+                role: primary
+                {{- else }}
+                app.kubernetes.io/name: postgresql
+                app.kubernetes.io/component: primary
+                {{- end }}
+        {{- end }}
+      # Redis connectivity
+      - ports:
+          - port: {{ .Values.cache.calendars.port }}
+            protocol: TCP
+        {{- if .Values.cache.calendars.isInternal }}
+        to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: redis
+                app.kubernetes.io/component: master
+        {{- end }}
+      # CalDAV connectivity (internal service)
+      - ports:
+          - port: 8080
+            protocol: TCP
+        to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/component: calendars-caldav
+      # Allow https egress for keycloak connection
+      - ports:
+          - port: 443
+  envVars:
+    DB_HOST: {{ .Values.database.calendars.host | quote }}
+    DB_PORT: {{ .Values.database.calendars.port | quote }}
+    DB_NAME: {{ .Values.database.calendars.name | quote }}
+    DB_USER: {{ .Values.database.calendars.user | quote }}
+    DB_PASSWORD: {{ .Values.database.calendars.password | quote }}
+    DJANGO_ALLOWED_HOSTS: {{ $hostname | quote }}
+    DJANGO_CELERY_BROKER_URL: {{ $redisUrl | quote }}
+    DJANGO_CONFIGURATION: "Production"
+    DJANGO_CORS_ALLOW_ALL_ORIGINS: "false"
+    DJANGO_CORS_ALLOWED_ORIGINS: {{ $baseUrl | quote }}
+    DJANGO_CSRF_TRUSTED_ORIGINS: {{ $baseUrl | quote }}
+    DJANGO_SECRET_KEY: {{ .Values.application.calendars.djangoSecretKey | quote }}
+    DJANGO_SETTINGS_MODULE: "calendars.settings"
+    DJANGO_SETTINGS_IMPORTER: "configurations.importer"
+    LANGUAGE_CODE: {{ .Values.global.defaultLocale | default "nl" | quote }}
+    LOGIN_REDIRECT_URL: {{ $baseUrl | quote }}
+    LOGIN_REDIRECT_URL_FAILURE: {{ $baseUrl | quote }}
+    LOGOUT_REDIRECT_URL: {{ $baseUrl | quote }}
+    OIDC_OP_JWKS_ENDPOINT: {{ .Values.authentication.oidc.jwks_uri | quote }}
+    OIDC_OP_AUTHORIZATION_ENDPOINT: {{ .Values.authentication.oidc.authorization_endpoint | quote }}
+    OIDC_OP_TOKEN_ENDPOINT: {{ .Values.authentication.oidc.token_endpoint | quote }}
+    OIDC_OP_USER_ENDPOINT: {{ .Values.authentication.oidc.userinfo_endpoint | quote }}
+    OIDC_OP_LOGOUT_ENDPOINT: {{ .Values.authentication.oidc.end_session_endpoint | quote }}
+    OIDC_RP_CLIENT_ID: {{ .Values.authentication.client.calendars.client_id | quote }}
+    OIDC_RP_CLIENT_SECRET: {{ .Values.authentication.client.calendars.client_secret | quote }}
+    OIDC_RP_SIGN_ALGO: "RS256"
+    OIDC_RP_SCOPES: "openid email"
+    OIDC_CREATE_USER: "false"
+    OIDC_FALLBACK_TO_EMAIL_FOR_IDENTIFICATION: "true"
+    REDIS_URL: {{ $redisUrl | quote }}
+    CALDAV_OUTBOUND_API_KEY: {{ .Values.application.calendars.caldavOutboundApiKey | quote }}
+    CALDAV_INTERNAL_API_KEY: {{ .Values.application.calendars.caldavInternalApiKey | quote }}
+    CALDAV_URL: "http://calendars-caldav:8080"
+    CALDAV_CALLBACK_URL: "http://calendars-backend:8000/api/v1.0/caldav-scheduling-callback"
+    {{- if .Values.application.meet.enabled }}
+    FRONTEND_MEET_BASE_URL: {{ printf "http%s://%s.%s" $sslPostfix .Values.global.hostname.meet .Values.global.domain | quote }}
+    {{- end }}
+
+worker:
+  image:
+    registry: {{ (coalesce .Values.container.calendars.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.calendars.backend.repository | quote }}
+    tag: {{ .Values.container.calendars.backend.tag | quote }}
+  replicaCount: 1
+  # sitecustomize.py in PYTHONPATH ensures configurations.setup() runs in all
+  # subprocesses (dramatiq worker processes spawned via os.execvp by rundramatiq)
+  command:
+    - /bin/sh
+    - -c
+    - |
+      printf 'from configurations import setup\nsetup()\n' > /tmp/sitecustomize.py
+      PYTHONPATH=/tmp python manage.py rundramatiq
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.calendars.worker | toYaml | nindent 4 }}
+  podSecurityContext: {{ .Values.security.default.podSecurityContext | toYaml | nindent 4 }}
+  containerSecurityContext: {{ .Values.security.default.containerSecurityContext | toYaml | nindent 4 }}
+  runtimeClassName: {{ .Values.cluster.runtimeClassName | quote }}
+  pdb: {{ .Values.pdb.calendars.worker | toYaml | nindent 4 }}
+  autoscaling:
+    hpa: {{ .Values.autoscaling.horizontal.calendars.worker | toYaml | nindent 6 }}
+  networkPolicy:
+    extraEgress:
+      # Database connectivity
+      - ports:
+          - port: {{ .Values.database.calendars.port }}
+            protocol: TCP
+        {{- if .Values.database.calendars.isInternal }}
+        to:
+          - podSelector:
+              matchLabels:
+                {{- if eq (.Values.database.default.provider | default "bitnami") "cnpg" }}
+                cnpg.io/cluster: calendars-cluster
+                role: primary
+                {{- else }}
+                app.kubernetes.io/name: postgresql
+                app.kubernetes.io/component: primary
+                {{- end }}
+        {{- end }}
+      # Redis connectivity
+      - ports:
+          - port: {{ .Values.cache.calendars.port }}
+            protocol: TCP
+        {{- if .Values.cache.calendars.isInternal }}
+        to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/name: redis
+                app.kubernetes.io/component: master
+        {{- end }}
+
+caldav:
+  image:
+    registry: {{ (coalesce .Values.container.calendars.registry .Values.container.default.registry) | quote }}
+    repository: {{ .Values.container.calendars.caldav.repository | quote }}
+    tag: {{ .Values.container.calendars.caldav.tag | quote }}
+  replicaCount: 1
+  containerPorts:
+    http: 8080
+  # Mount ConfigMap-patched Apache configs to use port 8080 (non-privileged)
+  extraVolumes:
+    - name: caldav-apache-ports
+      configMap:
+        name: calendars-caldav-apache
+  extraVolumeMounts:
+    - name: caldav-apache-ports
+      mountPath: /etc/apache2/ports.conf
+      subPath: ports.conf
+    - name: caldav-apache-ports
+      mountPath: /etc/apache2/sites-enabled/sabredav.conf
+      subPath: sabredav.conf
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.calendars.caldav | toYaml | nindent 4 }}
+  podSecurityContext:
+    enabled: true
+    fsGroup: 33
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
+  containerSecurityContext: {{ .Values.security.calendars.caldav.containerSecurityContext | toYaml | nindent 4 }}
+  runtimeClassName: {{ .Values.cluster.runtimeClassName | quote }}
+  networkPolicy:
+    extraEgress:
+      # Database connectivity
+      - ports:
+          - port: {{ .Values.database.calendars.port }}
+            protocol: TCP
+        {{- if .Values.database.calendars.isInternal }}
+        to:
+          - podSelector:
+              matchLabels:
+                {{- if eq (.Values.database.default.provider | default "bitnami") "cnpg" }}
+                cnpg.io/cluster: calendars-cluster
+                role: primary
+                {{- else }}
+                app.kubernetes.io/name: postgresql
+                app.kubernetes.io/component: primary
+                {{- end }}
+        {{- end }}
+      # Backend callback connectivity
+      - ports:
+          - port: 8000
+            protocol: TCP
+        to:
+          - podSelector:
+              matchLabels:
+                app.kubernetes.io/component: calendars-backend
+  envVars:
+    CALDAV_INBOUND_API_KEY: {{ .Values.application.calendars.caldavInboundApiKey | quote }}
+    CALDAV_INTERNAL_API_KEY: {{ .Values.application.calendars.caldavInternalApiKey | quote }}
+    CALDAV_OUTBOUND_API_KEY: {{ .Values.application.calendars.caldavOutboundApiKey | quote }}
+    CALDAV_CALLBACK_BASE_URL: "http://calendars-backend:8000"
+    CALDAV_BASE_URI: "/caldav/"
+    PGHOST: {{ .Values.database.calendars.host | quote }}
+    PGPORT: {{ .Values.database.calendars.port | quote }}
+    PGDATABASE: {{ .Values.database.calendars.name | quote }}
+    PGUSER: {{ .Values.database.calendars.user | quote }}
+    PGPASSWORD: {{ .Values.database.calendars.password | quote }}
+
+ingress:
+  enabled: true
+  hostname: {{ $hostname }}
+  ingressClassName: {{ .Values.cluster.ingress.className | quote }}
+  annotations:
+    {{- if .Values.cluster.ingress.annotations }}
+    {{ .Values.cluster.ingress.annotations | toYaml | nindent 4 }}
+    {{- end }}
+    {{- if eq .Values.cluster.ingress.type "nginx" }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    {{- else if eq .Values.cluster.ingress.type "haproxy-openshift" }}
+    haproxy.router.openshift.io/hsts_header: max-age=31536000;includeSubDomains;preload
+    {{- end }}
+    {{- if eq .Values.cluster.ingress.type "traefik" }}
+    traefik.ingress.kubernetes.io/router.middlewares: '{{ .Release.Namespace }}-hsts-header@kubernetescrd'
+    {{- end }}
+  tls: {{ .Values.global.tls.enabled | default true }}
+  selfSigned: {{ and .Values.global.tls.enabled .Values.global.tls.selfSigned | default false }}
+  extraTls: {{ .Values.tls.calendars | toYaml | nindent 4 }}

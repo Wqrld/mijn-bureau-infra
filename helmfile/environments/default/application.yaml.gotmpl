@@ -121,6 +121,15 @@ application:
     serviceTokenDocs: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "service-docs" | sha256sum | trunc 50 | quote }}
     serviceTokenDrive: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "find" "service-drive" | sha256sum | trunc 50 | quote }}
 
+  # calendars is a CalDAV-enabled group calendar application from La Suite Numérique
+  calendars:
+    enabled: false
+    namespace: ~
+    djangoSecretKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "calendars" "djangoSecretKey" | sha1sum | quote }}
+    caldavOutboundApiKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "calendars" "caldavOutboundApiKey" | sha1sum | quote }}
+    caldavInboundApiKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "calendars" "caldavInboundApiKey" | sha1sum | quote }}
+    caldavInternalApiKey: {{ derivePassword 1 "long" (requiredEnv "MIJNBUREAU_MASTER_PASSWORD") "calendars" "caldavInternalApiKey" | sha1sum | quote }}
+
   # Clam AV is a virus toolkit
   clamav:
     enabled: true

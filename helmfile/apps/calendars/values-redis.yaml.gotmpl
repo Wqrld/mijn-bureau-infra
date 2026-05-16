@@ -1,0 +1,163 @@
+#
+# SPDX-License-Identifier: APACHE-2.0
+
+## @section Global parameters
+global:
+  imageRegistry: {{(coalesce .Values.container.redis.registry .Values.container.default.registry) | quote }}
+  {{- with (coalesce .Values.container.redis.imagePullSecret .Values.container.default.imagePullSecret) }}
+  imagePullSecrets:
+    - name: {{ . | quote }}
+  {{- end }}
+  defaultStorageClass: {{ .Values.pvc.default.storageClass | quote }}
+  security:
+    allowInsecureImages: true
+  redis:
+    password: ""
+  compatibility:
+    openshift:
+      adaptSecurityContext: auto
+
+## @section Common parameters
+kubeVersion: ""
+nameOverride: ""
+fullnameOverride: ""
+namespaceOverride: ""
+commonLabels: {}
+commonAnnotations: {}
+configmapChecksumAnnotations: true
+secretChecksumAnnotations: true
+secretAnnotations: {}
+clusterDomain: {{ .Values.cluster.networking.domain | default "cluster.local" | quote }}
+extraDeploy: []
+useHostnames: true
+nameResolutionThreshold: 5
+nameResolutionTimeout: 5
+diagnosticMode:
+  enabled: false
+  command:
+    - sleep
+  args:
+    - infinity
+
+## @section Redis image parameters
+image:
+  registry: {{(coalesce .Values.container.redis.registry .Values.container.default.registry) | quote }}
+  repository: {{ .Values.container.redis.repository | default "bitnami/redis" | quote }}
+  tag: {{ .Values.container.redis.tag | default "8.0.3-debian-12-r1" | quote }}
+  digest: ""
+  pullPolicy: Always
+  {{- with (coalesce .Values.container.redis.imagePullSecret .Values.container.default.imagePullSecret) }}
+  pullSecrets:
+    - name: {{ . | quote }}
+  {{- end }}
+  debug: false
+
+## @section Redis common configuration parameters
+architecture: standalone
+
+auth:
+  enabled: true
+  sentinel: true
+  password: {{ .Values.cache.calendars.password | quote }}
+  existingSecret: ""
+  existingSecretPasswordKey: ""
+  usePasswordFiles: true
+  usePasswordFileFromSecret: true
+  acl:
+    enabled: false
+    sentinel: false
+    users: []
+    userSecret: ""
+
+commonConfiguration: |-
+  # Enable AOF https://redis.io/topics/persistence#append-only-file
+  appendonly yes
+  # Disable RDB persistence, AOF persistence already enabled.
+  save ""
+
+existingConfigmap: ""
+
+## @section Redis master configuration parameters
+master:
+  count: 1
+  revisionHistoryLimit: 10
+  configuration: ""
+  disableCommands:
+    - FLUSHDB
+    - FLUSHALL
+  command: []
+  args: []
+  enableServiceLinks: true
+  preExecCmds: []
+  extraFlags: []
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  containerPorts:
+    redis: 6379
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 5
+    successThreshold: 1
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 5
+  resourcesPreset: {{ .Values.global.resourcesPreset | quote }}
+  resources: {{ .Values.resource.calendars.redis | default dict | toYaml | nindent 4 }}
+  podSecurityContext: {{ .Values.security.default.podSecurityContext | toYaml | nindent 4 }}
+  containerSecurityContext: {{ .Values.security.default.containerSecurityContext | toYaml | nindent 4 }}
+  persistence:
+    enabled: true
+    path: /data
+    subPath: ""
+    storageClass: {{ (coalesce .Values.pvc.calendars.redis.storageClass .Values.pvc.default.storageClass) | quote }}
+    accessModes: {{ coalesce .Values.pvc.calendars.redis.accessModes .Values.pvc.default.accessModes (list "ReadWriteOnce") | toYaml | nindent 6 }}
+    size: {{ coalesce .Values.pvc.calendars.redis.size .Values.pvc.default.size "1Gi" }}
+    annotations: {}
+    labels: {}
+    selector: {}
+    dataSource: {}
+    existingClaim: ""
+  service:
+    type: ClusterIP
+    ports:
+      redis: 6379
+    nodePorts:
+      redis: ""
+    externalTrafficPolicy: Cluster
+    extraPorts: []
+    clusterIP: ""
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+    annotations: {}
+
+metrics:
+  enabled: {{ .Values.metric.enabled | default false }}
+  image:
+    registry: {{ coalesce .Values.container.redis_exporter.registry .Values.container.default.registry | default "docker.io" | quote }}
+    repository: {{ .Values.container.redis_exporter.repository | default "bitnami/redis-exporter" | quote }}
+    tag: {{ .Values.container.redis_exporter.tag | default "1.76.0-debian-12-r0" | quote }}
+    digest: ""
+    pullPolicy: IfNotPresent
+    {{- with (coalesce .Values.container.redis_exporter.imagePullSecret .Values.container.default.imagePullSecret) }}
+    pullSecrets:
+      - name: {{ . | quote }}
+    {{- end }}
+  serviceMonitor:
+    enabled: {{ .Values.metric.serviceMonitor.enabled | default false }}

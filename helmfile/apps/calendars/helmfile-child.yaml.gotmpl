@@ -1,0 +1,90 @@
+bases:
+  - "../../bases/child-environments.yaml"
+
+---
+
+bases:
+  - "../../bases/default.yaml.gotmpl"
+
+releases:
+  - name: calendars-postgresql
+    labels:
+      tier: infra
+    chart: ../common/charts/postgresql
+    version: "16.7.18"
+    {{- if .Values.application.calendars.namespace }}
+    namespace: {{ .Values.application.calendars.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") (.Values.application.calendars.enabled) (ne (.Values.database.default.provider | default "bitnami") "cnpg") | toYaml }}
+    values:
+      - "values-postgresql.yaml.gotmpl"
+
+  - name: calendars-cluster-credentials
+    labels:
+      tier: infra
+    chart: ../common/charts/cnpg-cluster-credentials
+    {{- if .Values.application.calendars.namespace }}
+    namespace: {{ .Values.application.calendars.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") (.Values.application.calendars.enabled) (eq (.Values.database.default.provider | default "bitnami") "cnpg") | toYaml }}
+    values:
+      - "values-cnpg-cluster-credentials.yaml.gotmpl"
+
+  - name: calendars-cluster
+    labels:
+      tier: infra
+    chart: ../common/charts/cluster
+    {{- if .Values.application.calendars.namespace }}
+    namespace: {{ .Values.application.calendars.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") (.Values.application.calendars.enabled) (eq (.Values.database.default.provider | default "bitnami") "cnpg") | toYaml }}
+    needs:
+      - {{ if .Values.application.calendars.namespace }}{{ .Values.application.calendars.namespace }}/{{ end }}calendars-cluster-credentials
+    values:
+      - "values-cnpg-cluster.yaml.gotmpl"
+
+  - name: calendars-redis
+    labels:
+      tier: infra
+    chart: ../common/charts/redis
+    version: "21.2.6"
+    {{- if .Values.application.calendars.namespace }}
+    namespace: {{ .Values.application.calendars.namespace }}
+    {{- end }}
+    installed: {{ and (eq .Environment.Name "demo") (.Values.application.calendars.enabled) | toYaml }}
+    values:
+      - "values-redis.yaml.gotmpl"
+
+  - name: calendars
+    labels:
+      tier: app
+    chart: charts/calendars
+    condition: application.calendars.enabled
+    {{- if .Values.application.calendars.namespace }}
+    namespace: {{ .Values.application.calendars.namespace }}
+    {{- end }}
+    {{- if and (eq .Environment.Name "demo") (.Values.application.calendars.enabled) }}
+    needs:
+      {{- if eq (.Values.database.default.provider | default "bitnami") "cnpg" }}
+      - {{ if .Values.application.calendars.namespace }}{{ .Values.application.calendars.namespace }}/{{ end }}calendars-cluster
+      {{- else }}
+      - {{ if .Values.application.calendars.namespace }}{{ .Values.application.calendars.namespace }}/{{ end }}calendars-postgresql
+      {{- end }}
+      - {{ if .Values.application.calendars.namespace }}{{ .Values.application.calendars.namespace }}/{{ end }}calendars-redis
+    {{- end }}
+    values:
+      - "../common/values-cluster-ingress.yaml.gotmpl"
+      - "values.yaml.gotmpl"
+
+  - name: calendars-static
+    labels:
+      tier: app
+    chart: ../common/charts/nginx
+    version: "22.0.0"
+    {{- if .Values.application.calendars.namespace }}
+    namespace: {{ .Values.application.calendars.namespace }}
+    {{- end }}
+    installed: {{ .Values.application.calendars.enabled | toYaml }}
+    values:
+      - "../common/values-cluster-ingress.yaml.gotmpl"
+      - "values-static-nginx.yaml.gotmpl"

@@ -1,0 +1,49 @@
+{{- /*
+
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.fullname" . }}-caldav-apache
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: calendars-caldav
+data:
+  ports.conf: |
+    # Apache listens on 8080 (non-privileged) inside the container.
+    # The Kubernetes service exposes it on port 80 externally.
+    Listen {{ .Values.caldav.containerPorts.http }}
+
+    <IfModule ssl_module>
+      Listen 443
+    </IfModule>
+
+    <IfModule mod_gnutls.c>
+      Listen 443
+    </IfModule>
+  sabredav.conf: |
+    <VirtualHost *:{{ .Values.caldav.containerPorts.http }}>
+        ServerName localhost
+        DocumentRoot /var/www/sabredav
+
+        <Directory /var/www/sabredav>
+            AllowOverride All
+            Require all granted
+            Options -Indexes +FollowSymLinks
+        </Directory>
+
+        # Rewrite rules for CalDAV
+        RewriteEngine On
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule ^(.*)$ server.php [QSA,L]
+
+        # Well-known CalDAV discovery
+        RewriteRule ^\.well-known/caldav / [R=301,L]
+
+        # Write errors to stderr for container logs
+        ErrorLog /dev/stderr
+        CustomLog /dev/stdout combined
+    </VirtualHost>
