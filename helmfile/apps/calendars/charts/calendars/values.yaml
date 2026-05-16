@@ -71,8 +71,94 @@ ingress:
   selfSigned: false
   extraTls: []
 
+## Shared defaults for all component deployments
+x-component-defaults: &component-defaults
+  replicaCount: 1
+  resourcesPreset: small
+  resources: {}
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    runAsUser: 1001
+    runAsGroup: 1001
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+  runtimeClassName: ""
+  pdb:
+    create: true
+    maxUnavailable: 1
+  autoscaling:
+    hpa:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPU: 80
+      targetMemory: ""
+  networkPolicy:
+    extraEgress: []
+  podLabels: {}
+  podAnnotations: {}
+  podAffinityPreset: ""
+  podAntiAffinityPreset: soft
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  priorityClassName: ""
+  schedulerName: ""
+  terminationGracePeriodSeconds: ""
+  topologySpreadConstraints: []
+  command: []
+  args: []
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  lifecycleHooks: {}
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 15
+    successThreshold: 1
+  sidecars: []
+  initContainers: []
+  extraVolumeMounts: []
+  extraVolumes: []
+  automountServiceAccountToken: false
+  hostAliases: []
+  envVars: {}
+
 ## @section Frontend configuration
 frontend:
+  <<: *component-defaults
   image:
     registry: ghcr.io
     repository: suitenumerique/calendars-frontend
@@ -80,91 +166,12 @@ frontend:
     pullPolicy: Always
     pullSecrets: []
     debug: false
-  replicaCount: 1
   containerPorts:
     http: 8080
-  resourcesPreset: small
-  resources: {}
-  podSecurityContext:
-    enabled: true
-    fsGroup: 1001
-    fsGroupChangePolicy: Always
-    sysctls: []
-    supplementalGroups: []
-  containerSecurityContext:
-    enabled: true
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - "ALL"
-    privileged: false
-    runAsUser: 1001
-    runAsGroup: 1001
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-  runtimeClassName: ""
-  pdb:
-    create: true
-    maxUnavailable: 1
-  autoscaling:
-    hpa:
-      enabled: false
-      minReplicas: 1
-      maxReplicas: 3
-      targetCPU: 80
-      targetMemory: ""
-  podLabels: {}
-  podAnnotations: {}
-  podAffinityPreset: ""
-  podAntiAffinityPreset: soft
-  nodeAffinityPreset:
-    type: ""
-    key: ""
-    values: []
-  affinity: {}
-  nodeSelector: {}
-  tolerations: []
-  priorityClassName: ""
-  schedulerName: ""
-  terminationGracePeriodSeconds: ""
-  topologySpreadConstraints: []
-  command: []
-  args: []
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
-  lifecycleHooks: {}
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  startupProbe:
-    enabled: false
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 15
-    successThreshold: 1
-  sidecars: []
-  initContainers: []
-  extraVolumeMounts: []
-  extraVolumes: []
-  automountServiceAccountToken: false
-  hostAliases: []
-  envVars: {}
 
 ## @section Backend configuration
 backend:
+  <<: *component-defaults
   image:
     registry: ghcr.io
     repository: suitenumerique/calendars-backend
@@ -172,93 +179,12 @@ backend:
     pullPolicy: Always
     pullSecrets: []
     debug: false
-  replicaCount: 1
   containerPorts:
     http: 8000
-  resourcesPreset: small
-  resources: {}
-  podSecurityContext:
-    enabled: true
-    fsGroup: 1001
-    fsGroupChangePolicy: Always
-    sysctls: []
-    supplementalGroups: []
-  containerSecurityContext:
-    enabled: true
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - "ALL"
-    privileged: false
-    runAsUser: 1001
-    runAsGroup: 1001
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-  runtimeClassName: ""
-  pdb:
-    create: true
-    maxUnavailable: 1
-  autoscaling:
-    hpa:
-      enabled: false
-      minReplicas: 1
-      maxReplicas: 3
-      targetCPU: 80
-      targetMemory: ""
-  networkPolicy:
-    extraEgress: []
-  podLabels: {}
-  podAnnotations: {}
-  podAffinityPreset: ""
-  podAntiAffinityPreset: soft
-  nodeAffinityPreset:
-    type: ""
-    key: ""
-    values: []
-  affinity: {}
-  nodeSelector: {}
-  tolerations: []
-  priorityClassName: ""
-  schedulerName: ""
-  terminationGracePeriodSeconds: ""
-  topologySpreadConstraints: []
-  command: []
-  args: []
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
-  lifecycleHooks: {}
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  startupProbe:
-    enabled: false
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 15
-    successThreshold: 1
-  sidecars: []
-  initContainers: []
-  extraVolumeMounts: []
-  extraVolumes: []
-  automountServiceAccountToken: false
-  hostAliases: []
-  envVars: {}
 
 ## @section Worker configuration (Dramatiq)
 worker:
+  <<: *component-defaults
   image:
     registry: ghcr.io
     repository: suitenumerique/calendars-backend
@@ -266,72 +192,14 @@ worker:
     pullPolicy: Always
     pullSecrets: []
     debug: false
-  replicaCount: 1
   command:
     - python
     - manage.py
     - rundramatiq
-  resourcesPreset: small
-  resources: {}
-  podSecurityContext:
-    enabled: true
-    fsGroup: 1001
-    fsGroupChangePolicy: Always
-    sysctls: []
-    supplementalGroups: []
-  containerSecurityContext:
-    enabled: true
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - "ALL"
-    privileged: false
-    runAsUser: 1001
-    runAsGroup: 1001
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-  runtimeClassName: ""
-  pdb:
-    create: true
-    maxUnavailable: 1
-  autoscaling:
-    hpa:
-      enabled: false
-      minReplicas: 1
-      maxReplicas: 3
-      targetCPU: 80
-      targetMemory: ""
-  networkPolicy:
-    extraEgress: []
-  podLabels: {}
-  podAnnotations: {}
-  podAffinityPreset: ""
-  podAntiAffinityPreset: soft
-  nodeAffinityPreset:
-    type: ""
-    key: ""
-    values: []
-  affinity: {}
-  nodeSelector: {}
-  tolerations: []
-  priorityClassName: ""
-  schedulerName: ""
-  terminationGracePeriodSeconds: ""
-  topologySpreadConstraints: []
-  args: []
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
-  lifecycleHooks: {}
-  sidecars: []
-  initContainers: []
-  extraVolumeMounts: []
-  extraVolumes: []
-  automountServiceAccountToken: false
-  hostAliases: []
 
 ## @section CalDAV configuration (SabreDAV PHP/Apache)
 caldav:
+  <<: *component-defaults
   image:
     registry: ghcr.io
     repository: suitenumerique/calendars-caldav
@@ -339,11 +207,8 @@ caldav:
     pullPolicy: Always
     pullSecrets: []
     debug: false
-  replicaCount: 1
   containerPorts:
     http: 8080
-  resourcesPreset: small
-  resources: {}
   podSecurityContext:
     enabled: true
     fsGroup: 33
@@ -361,55 +226,3 @@ caldav:
     runAsGroup: 33
     readOnlyRootFilesystem: false
     runAsNonRoot: true
-  runtimeClassName: ""
-  networkPolicy:
-    extraEgress: []
-  podLabels: {}
-  podAnnotations: {}
-  podAffinityPreset: ""
-  podAntiAffinityPreset: soft
-  nodeAffinityPreset:
-    type: ""
-    key: ""
-    values: []
-  affinity: {}
-  nodeSelector: {}
-  tolerations: []
-  priorityClassName: ""
-  schedulerName: ""
-  terminationGracePeriodSeconds: ""
-  topologySpreadConstraints: []
-  command: []
-  args: []
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
-  lifecycleHooks: {}
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
-    successThreshold: 1
-  startupProbe:
-    enabled: false
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 15
-    successThreshold: 1
-  sidecars: []
-  initContainers: []
-  extraVolumeMounts: []
-  extraVolumes: []
-  automountServiceAccountToken: false
-  hostAliases: []
-  envVars: {}

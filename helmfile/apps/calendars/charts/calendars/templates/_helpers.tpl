@@ -22,6 +22,94 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
+Render a NetworkPolicy for a named component.
+Usage: include "calendars.networkpolicy" (dict
+  "name"         "backend"        -- component suffix
+  "values"       .Values.backend  -- component-specific values
+  "hasIngress"   true             -- false for worker (no listening port)
+  "backendEgress" false           -- true for frontend (needs to reach backend)
+  "ctx"          $                -- root Helm context
+)
+*/}}
+{{- define "calendars.networkpolicy" -}}
+{{- $name         := .name -}}
+{{- $vals         := .values -}}
+{{- $ctx          := .ctx -}}
+{{- $component    := printf "calendars-%s" $name -}}
+{{- $hasIngress   := .hasIngress -}}
+{{- $backendEgress := default false .backendEgress -}}
+---
+apiVersion: {{ include "common.capabilities.networkPolicy.apiVersion" $ctx }}
+kind: NetworkPolicy
+metadata:
+  name: {{ include "common.names.fullname" $ctx }}-{{ $name }}
+  namespace: {{ include "common.names.namespace" $ctx | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" $ctx.Values.commonLabels "context" $ctx ) | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+  {{- if $ctx.Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $ctx.Values.commonAnnotations "context" $ctx ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list $vals.podLabels $ctx.Values.commonLabels ) "context" $ctx ) }}
+  podSelector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ctx ) | nindent 6 }}
+      app.kubernetes.io/component: {{ $component }}
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    {{- if $ctx.Values.networkPolicy.allowExternalEgress }}
+    - {}
+    {{- else }}
+    - ports:
+        # Allow dns resolution
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- if $backendEgress }}
+    # Allow egress to backend
+    - ports:
+        - port: {{ $ctx.Values.backend.containerPorts.http }}
+          protocol: TCP
+      to:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $ctx.Values.commonLabels "context" $ctx ) | nindent 14 }}
+              app.kubernetes.io/component: calendars-backend
+    {{- end }}
+    {{- if $vals.networkPolicy.extraEgress }}
+    {{- include "common.tplvalues.render" ( dict "value" $vals.networkPolicy.extraEgress "context" $ctx ) | nindent 4 }}
+    {{- end }}
+    {{- if $ctx.Values.networkPolicy.extraEgress }}
+    {{- include "common.tplvalues.render" ( dict "value" $ctx.Values.networkPolicy.extraEgress "context" $ctx ) | nindent 4 }}
+    {{- end }}
+    {{- end }}
+  {{- if $hasIngress }}
+  ingress:
+    - ports:
+        - port: {{ $vals.containerPorts.http }}
+      {{- if not $ctx.Values.networkPolicy.allowExternal }}
+      from:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $ctx.Values.commonLabels "context" $ctx ) | nindent 14 }}
+        {{- if $ctx.Values.networkPolicy.ingressNSMatchLabels }}
+        - namespaceSelector:
+            matchLabels: {{- include "common.tplvalues.render" (dict "value" $ctx.Values.networkPolicy.ingressNSMatchLabels "context" $ctx ) | nindent 14 }}
+          {{- if $ctx.Values.networkPolicy.ingressNSPodMatchLabels }}
+          podSelector:
+            matchLabels: {{- include "common.tplvalues.render" (dict "value" $ctx.Values.networkPolicy.ingressNSPodMatchLabels "context" $ctx ) | nindent 14 }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- if $ctx.Values.networkPolicy.extraIngress }}
+    {{- include "common.tplvalues.render" ( dict "value" $ctx.Values.networkPolicy.extraIngress "context" $ctx ) | nindent 4 }}
+    {{- end }}
+  {{- else }}
+  ingress: []
+  {{- end }}
+{{ end -}}
+
+{{/*
 Render a Deployment for a named component.
 Usage: include "calendars.deployment" (dict
   "name"      "backend"        -- component suffix appended to release name
