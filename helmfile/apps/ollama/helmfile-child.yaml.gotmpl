@@ -1,15 +1,8 @@
 bases:
-  - "../../bases/child-environments.yaml"
-
----
-
-bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: "ollama"
-    labels:
-      tier: app
     chart: "./charts/ollama"
     condition: application.ollama.enabled
     {{- if .Values.application.ollama.namespace }}

@@ -1,15 +1,8 @@
 bases:
-  - "../../bases/child-environments.yaml"
-
----
-
-bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: bureaublad-redis
-    labels:
-      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.bureaublad.namespace }}
@@ -20,8 +13,6 @@ releases:
       - "values-redis.yaml.gotmpl"
 
   - name: bureaublad
-    labels:
-      tier: app
     chart: charts/bureaublad
     condition: application.bureaublad.enabled
     {{- if .Values.application.bureaublad.namespace }}

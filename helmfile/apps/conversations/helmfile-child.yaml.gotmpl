@@ -1,15 +1,8 @@
 bases:
-  - "../../bases/child-environments.yaml"
-
----
-
-bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: "conversations"
-    labels:
-      tier: app
     chart: "charts/conversations"
     condition: application.conversations.enabled
     {{- if .Values.application.conversations.namespace }}
@@ -29,8 +22,6 @@ releases:
     {{- end }}
 
   - name: conversations-postgresql
-    labels:
-      tier: infra
     chart: ../common/charts/postgresql
     version: "16.7.18"
     {{- if .Values.application.conversations.namespace }}
@@ -41,8 +32,6 @@ releases:
       - "values-postgresql.yaml.gotmpl"
 
   - name: conversations-cluster-credentials
-    labels:
-      tier: infra
     chart: ../common/charts/cnpg-cluster-credentials
     {{- if .Values.application.conversations.namespace }}
     namespace: {{ .Values.application.conversations.namespace }}
@@ -52,8 +41,6 @@ releases:
       - "values-cnpg-cluster-credentials.yaml.gotmpl"
 
   - name: conversations-cluster
-    labels:
-      tier: infra
     chart: ../common/charts/cluster
     {{- if .Values.application.conversations.namespace }}
     namespace: {{ .Values.application.conversations.namespace }}
@@ -65,8 +52,6 @@ releases:
       - "values-cnpg-cluster.yaml.gotmpl"
 
   - name: conversations-redis
-    labels:
-      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.conversations.namespace }}
@@ -77,8 +62,6 @@ releases:
       - "values-redis.yaml.gotmpl"
 
   - name: conversations-static
-    labels:
-      tier: app
     chart: ../common/charts/nginx
     version: "22.0.0"
     {{- if .Values.application.conversations.namespace }}

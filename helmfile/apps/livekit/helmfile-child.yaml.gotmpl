@@ -1,15 +1,8 @@
 bases:
-  - "../../bases/child-environments.yaml"
-
----
-
-bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: livekit-server
-    labels:
-      tier: app
     chart: charts/livekit-server
     condition: application.livekit.enabled
     {{- if .Values.application.livekit.namespace }}
@@ -24,8 +17,6 @@ releases:
       - "values.yaml.gotmpl"
 
   - name: livekit-redis
-    labels:
-      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.livekit.namespace }}

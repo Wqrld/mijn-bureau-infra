@@ -1,15 +1,8 @@
 bases:
-  - "../../bases/child-environments.yaml"
-
----
-
-bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: nextcloud-postgresql
-    labels:
-      tier: infra
     chart: ../common/charts/postgresql
     version: "16.7.18"
     {{- if .Values.application.nextcloud.namespace }}
@@ -20,8 +13,6 @@ releases:
       - "values-postgresql.yaml.gotmpl"
 
   - name: nextcloud-cluster-credentials
-    labels:
-      tier: infra
     chart: ../common/charts/cnpg-cluster-credentials
     {{- if .Values.application.nextcloud.namespace }}
     namespace: {{ .Values.application.nextcloud.namespace }}
@@ -31,8 +22,6 @@ releases:
       - "values-cnpg-cluster-credentials.yaml.gotmpl"
 
   - name: nextcloud-cluster
-    labels:
-      tier: infra
     chart: ../common/charts/cluster
     {{- if .Values.application.nextcloud.namespace }}
     namespace: {{ .Values.application.nextcloud.namespace }}
@@ -44,8 +33,6 @@ releases:
       - "values-cnpg-cluster.yaml.gotmpl"
 
   - name: nextcloud-redis
-    labels:
-      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.nextcloud.namespace }}
@@ -56,8 +43,6 @@ releases:
       - "values-redis.yaml.gotmpl"
 
   - name: nextcloud-minio
-    labels:
-      tier: infra
     chart: ../common/charts/minio
     version: "17.0.11"
     {{- if .Values.application.nextcloud.namespace }}
@@ -69,8 +54,6 @@ releases:
       - "values-minio.yaml.gotmpl"
 
   - name: nextcloud
-    labels:
-      tier: app
     chart: charts/nextcloud
     condition: application.nextcloud.enabled
     {{- if .Values.application.nextcloud.namespace }}

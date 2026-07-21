@@ -1,15 +1,8 @@
 bases:
-  - "../../bases/child-environments.yaml"
-
----
-
-bases:
   - "../../bases/default.yaml.gotmpl"
 
 releases:
   - name: find-postgresql
-    labels:
-      tier: infra
     chart: ../common/charts/postgresql
     version: "16.7.18"
     {{- if .Values.application.find.namespace }}
@@ -20,8 +13,6 @@ releases:
       - "values-postgresql.yaml.gotmpl"
 
   - name: find-redis
-    labels:
-      tier: infra
     chart: ../common/charts/redis
     version: "21.2.6"
     {{- if .Values.application.find.namespace }}
@@ -32,8 +23,6 @@ releases:
       - "values-redis.yaml.gotmpl"
 
   - name: find-opensearch
-    labels:
-      tier: infra
     chart: ../common/charts/opensearch
     version: "3.5.0"
     {{- if .Values.application.find.namespace }}
@@ -44,8 +33,6 @@ releases:
       - "values-opensearch.yaml.gotmpl"
 
   - name: find
-    labels:
-      tier: app
     chart: charts/find
     condition: application.find.enabled
     {{- if .Values.application.find.namespace }}
